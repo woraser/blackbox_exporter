@@ -118,6 +118,7 @@ type Module struct {
 	Timeout time.Duration `yaml:"timeout,omitempty"`
 	HTTP    HTTPProbe     `yaml:"http,omitempty"`
 	TCP     TCPProbe      `yaml:"tcp,omitempty"`
+	UDP     UDPProbe      `yaml:"udp,omitempty"`
 	ICMP    ICMPProbe     `yaml:"icmp,omitempty"`
 	DNS     DNSProbe      `yaml:"dns,omitempty"`
 }
@@ -160,6 +161,13 @@ type TCPProbe struct {
 	QueryResponse      []QueryResponse  `yaml:"query_response,omitempty"`
 	TLS                bool             `yaml:"tls,omitempty"`
 	TLSConfig          config.TLSConfig `yaml:"tls_config,omitempty"`
+}
+
+type UDPProbe struct {
+	IPProtocol         string           `yaml:"preferred_ip_protocol,omitempty"`
+	IPProtocolFallback bool             `yaml:"ip_protocol_fallback,omitempty"`
+	SourceIPAddress    string           `yaml:"source_ip_address,omitempty"`
+	QueryResponse      []QueryResponse  `yaml:"query_response,omitempty"`
 }
 
 type ICMPProbe struct {
