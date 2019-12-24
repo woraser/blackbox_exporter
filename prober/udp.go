@@ -137,7 +137,8 @@ func verifyQueryResponse(qr config.QueryResponse, logger log.Logger, conn net.Co
 		}
 		var match []int
 		// Read lines until one of them matches the configured regexp.
-		data := make([]byte, 255)
+		// tip: max size of data: 1M
+		data := make([]byte, 2 << 9)
 		_, err = conn.Read(data)
 		if err != nil {
 			level.Debug(logger).Log("error", "cannot read msg from conn", err)
