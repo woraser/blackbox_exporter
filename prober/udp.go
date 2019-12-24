@@ -1,8 +1,8 @@
 package prober
 
 import (
-	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"regexp"
@@ -22,6 +22,12 @@ func dialUDP(ctx context.Context, target string, module config.Module, registry 
 		return nil, err
 	}
 	// select ip protocol for udp
+	// default IPProtocol: ipv4
+	// chooseProtocol return err if module.UDP.IPProtocol is empty
+	// TODO lost ipv6 test
+	if module.UDP.IPProtocol == "" {
+		module.UDP.IPProtocol = "ip4"
+	}
 	ip, _, err := chooseProtocol(ctx, module.UDP.IPProtocol, module.UDP.IPProtocolFallback, targetAddress, registry, logger)
 	if err != nil {
 		level.Error(logger).Log("msg", "Error resolving address", "err", err)
@@ -54,9 +60,8 @@ func dialUDP(ctx context.Context, target string, module config.Module, registry 
 		level.Error(logger).Log("error", "Can't resolve address:", "error:", err)
 		return nil, fmt.Errorf("can't resolve address:%s", err)
 	}
-	fmt.Println("sourceAddr:", sourceAddr)
 	level.Info(logger).Log("msg", "Dialing UDP")
-	return net.DialUDP(dialProtocol, nil, addr)
+	return net.DialUDP(dialProtocol, sourceAddr, addr)
 }
 
 
@@ -84,45 +89,77 @@ func ProbeUDP(ctx context.Context, target string, module config.Module, registry
 		return false
 	}
 
-	scanner := bufio.NewScanner(conn)
+	// verify connect response
+	verifyConn := frontVerify(module.UDP.ConnectResponse)
+	if verifyConn == false {
+		level.Error(logger).Log("msg", "Error find connect response")
+		return false
+	}
+
+	_, er :=verifyQueryResponse(module.UDP.ConnectResponse, logger, conn, probeFailedDueToRegex)
+	if er != nil {
+		level.Error(logger).Log("msg", "failed verifyQueryResponse", er)
+		return false
+	}
+
+	// verify query response
 	for i, qr := range module.UDP.QueryResponse {
+		qrRes := frontVerify(qr)
+		if qrRes == false {
+			level.Error(logger).Log("msg", "Error find connect response")
+			return false
+		}
+
 		level.Info(logger).Log("msg", "Processing query response entry", "entry_number", i)
-		send := qr.Send
-		if qr.Expect != "" {
-			re, err := regexp.Compile(qr.Expect)
-			if err != nil {
-				level.Error(logger).Log("msg", "Could not compile into regular expression", "regexp", qr.Expect, "err", err)
-				return false
-			}
-			var match []int
-			// Read lines until one of them matches the configured regexp.
-			for scanner.Scan() {
-				level.Debug(logger).Log("msg", "Read line", "line", scanner.Text())
-				match = re.FindSubmatchIndex(scanner.Bytes())
-				if match != nil {
-					level.Info(logger).Log("msg", "Regexp matched", "regexp", re, "line", scanner.Text())
-					break
-				}
-			}
-			if scanner.Err() != nil {
-				level.Error(logger).Log("msg", "Error reading from connection", "err", scanner.Err().Error())
-				return false
-			}
-			if match == nil {
-				probeFailedDueToRegex.Set(1)
-				level.Error(logger).Log("msg", "Regexp did not match", "regexp", re, "line", scanner.Text())
-				return false
-			}
-			probeFailedDueToRegex.Set(0)
-			send = string(re.Expand(nil, []byte(send), scanner.Bytes(), match))
+		_, err :=verifyQueryResponse(qr, logger, conn, probeFailedDueToRegex)
+		if err != nil {
+			level.Error(logger).Log("msg", "failed verifyQueryResponse")
+			return false
 		}
-		if send != "" {
-			level.Debug(logger).Log("msg", "Sending line", "line", send)
-			if _, err := fmt.Fprintf(conn, "%s\n", send); err != nil {
-				level.Error(logger).Log("msg", "Failed to send", "err", err)
-				return false
-			}
+	}
+	return true
+}
+
+func verifyQueryResponse(qr config.QueryResponse, logger log.Logger, conn net.Conn, probeFailedDueToRegex prometheus.Gauge) (bool, error) {
+	send := qr.Send
+	if send != "" {
+		level.Debug(logger).Log("msg", "Sending line", "line", send)
+		if _, err := fmt.Fprintf(conn, "%s\n", send); err != nil {
+			level.Error(logger).Log("msg", "Failed to send", "err", err)
+			return false, err
 		}
+	}
+	if qr.Expect != "" {
+		re, err := regexp.Compile(qr.Expect)
+		if err != nil {
+			level.Error(logger).Log("msg", "Could not compile into regular expression", "regexp", qr.Expect, "err", err)
+			return false, err
+		}
+		var match []int
+		// Read lines until one of them matches the configured regexp.
+		data := make([]byte, 255)
+		_, err = conn.Read(data)
+		if err != nil {
+			level.Debug(logger).Log("error", "cannot read msg from conn", err)
+			return false, errors.New("cannot read msg from conn")
+		}
+		match = re.FindSubmatchIndex(data)
+		if match != nil {
+			level.Info(logger).Log("msg", "Regexp matched", "regexp", re, "line", string(data))
+		}
+		if match == nil {
+			probeFailedDueToRegex.Set(1)
+			level.Error(logger).Log("msg", "Regexp did not match", "regexp", re, "line", string(data))
+			return false, errors.New("regexp did not match")
+		}
+		probeFailedDueToRegex.Set(0)
+	}
+	return true, nil
+}
+
+func frontVerify(qr config.QueryResponse) bool {
+	if qr.Send == "" || qr.Expect == "" {
+		return false
 	}
 	return true
 }
