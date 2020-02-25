@@ -7,8 +7,8 @@
 ### 1. Add UDP Protocol
 
 The additional config for UDP Protocol.
-* return i/o timeout if udp server return nil
-* return read: connection refused if udp server closed
+* return error:i/o timeout if udp server return nil
+* return error:read connection refused if udp server closed
 ```yaml
 # required. ip4 or ip6
 preferred_ip_protocol: "ip4" 

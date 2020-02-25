@@ -109,8 +109,8 @@ func verifyConnect(logger log.Logger, conn net.Conn, probeFailedDueToRegex prome
 	_, errs := conn.Read(data)
 	if errs != nil {
 		fmt.Println("err:", errs)
-		// return i/o timeout if udp server return nil
-		// return read: connection refused if udp server closed
+		// return error: i/o timeout if udp server return nil
+		// return error: read connection refused if udp server closed
 		level.Debug(logger).Log("error", "cannot read msg from conn", errs)
 		return false, errors.New("cannot read msg from conn")
 	}
