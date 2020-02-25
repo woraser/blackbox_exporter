@@ -4,16 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
-	"regexp"
-
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/blackbox_exporter/config"
 	"github.com/prometheus/client_golang/prometheus"
+	"net"
 )
 
-func dialUDP(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger) (net.Conn, error) {
+func  dialUDP(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger) (net.Conn, error) {
 	var dialProtocol string
 	sourceAddr := &net.UDPAddr{}
 	targetAddress, port, err := net.SplitHostPort(target)
@@ -89,78 +87,32 @@ func ProbeUDP(ctx context.Context, target string, module config.Module, registry
 		return false
 	}
 
-	// verify connect response
-	verifyConn := frontVerify(module.UDP.ConnectResponse)
-	if verifyConn == false {
-		level.Error(logger).Log("msg", "Error find connect response")
-		return false
-	}
-
-	_, er :=verifyQueryResponse(module.UDP.ConnectResponse, logger, conn, probeFailedDueToRegex)
+	_, er :=verifyConnect(logger, conn, probeFailedDueToRegex)
 	if er != nil {
 		level.Error(logger).Log("msg", "failed verifyQueryResponse", er)
 		return false
 	}
 
-	// verify query response
-	for i, qr := range module.UDP.QueryResponse {
-		qrRes := frontVerify(qr)
-		if qrRes == false {
-			level.Error(logger).Log("msg", "Error find connect response")
-			return false
-		}
-
-		level.Info(logger).Log("msg", "Processing query response entry", "entry_number", i)
-		_, err :=verifyQueryResponse(qr, logger, conn, probeFailedDueToRegex)
-		if err != nil {
-			level.Error(logger).Log("msg", "failed verifyQueryResponse")
-			return false
-		}
-	}
 	return true
 }
 
-func verifyQueryResponse(qr config.QueryResponse, logger log.Logger, conn net.Conn, probeFailedDueToRegex prometheus.Gauge) (bool, error) {
-	send := qr.Send
-	if send != "" {
-		level.Debug(logger).Log("msg", "Sending line", "line", send)
-		if _, err := fmt.Fprintf(conn, "%s\n", send); err != nil {
-			level.Error(logger).Log("msg", "Failed to send", "err", err)
-			return false, err
-		}
+func verifyConnect(logger log.Logger, conn net.Conn, probeFailedDueToRegex prometheus.Gauge) (bool, error) {
+	send := ""
+	level.Debug(logger).Log("msg", "Sending line", "line", send)
+	if _, err := fmt.Fprintf(conn, "%s\n", send); err != nil {
+		level.Error(logger).Log("msg", "Failed to send", "err", err)
+		return false, err
 	}
-	if qr.Expect != "" {
-		re, err := regexp.Compile(qr.Expect)
-		if err != nil {
-			level.Error(logger).Log("msg", "Could not compile into regular expression", "regexp", qr.Expect, "err", err)
-			return false, err
-		}
-		var match []int
-		// Read lines until one of them matches the configured regexp.
-		// tip: max size of data: 1M
-		data := make([]byte, 2 << 9)
-		_, err = conn.Read(data)
-		if err != nil {
-			level.Debug(logger).Log("error", "cannot read msg from conn", err)
-			return false, errors.New("cannot read msg from conn")
-		}
-		match = re.FindSubmatchIndex(data)
-		if match != nil {
-			level.Info(logger).Log("msg", "Regexp matched", "regexp", re, "line", string(data))
-		}
-		if match == nil {
-			probeFailedDueToRegex.Set(1)
-			level.Error(logger).Log("msg", "Regexp did not match", "regexp", re, "line", string(data))
-			return false, errors.New("regexp did not match")
-		}
-		probeFailedDueToRegex.Set(0)
+	// Read lines until one of them matches the configured regexp.
+	// tip: max size of data: 1M
+	data := make([]byte, 2 << 9)
+	_, errs := conn.Read(data)
+	if errs != nil {
+		fmt.Println("err:", errs)
+		// return i/o timeout if udp server return nil
+		// return read: connection refused if udp server closed
+		level.Debug(logger).Log("error", "cannot read msg from conn", errs)
+		return false, errors.New("cannot read msg from conn")
 	}
 	return true, nil
-}
-
-func frontVerify(qr config.QueryResponse) bool {
-	if qr.Send == "" || qr.Expect == "" {
-		return false
-	}
-	return true
 }

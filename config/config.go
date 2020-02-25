@@ -167,8 +167,6 @@ type UDPProbe struct {
 	IPProtocol         string           `yaml:"preferred_ip_protocol,omitempty"`
 	IPProtocolFallback bool             `yaml:"ip_protocol_fallback,omitempty"`
 	SourceIPAddress    string           `yaml:"source_ip_address,omitempty"`
-	ConnectResponse    QueryResponse    `yaml:"connect_response,omitempty"`
-	QueryResponse      []QueryResponse  `yaml:"query_response,omitempty"`
 }
 
 type ICMPProbe struct {

@@ -61,14 +61,6 @@ modules:
     prober: udp
     udp:
       preferred_ip_protocol: "ip4"
-      connect_response:
-        send: "ok"
-        expect: "ok"
-      query_response:
-        - send: "ok"
-          expect: "ok"
-        - send: "test"
-          expect: "ok"
   tcp_connect_example:
     prober: tcp
     timeout: 5s
