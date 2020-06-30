@@ -11,7 +11,7 @@ import (
 	"net"
 )
 
-func  dialUDP(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger) (net.Conn, error) {
+func dialUDP(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger) (net.Conn, error) {
 	var dialProtocol string
 	sourceAddr := &net.UDPAddr{}
 	targetAddress, port, err := net.SplitHostPort(target)
@@ -46,7 +46,7 @@ func  dialUDP(ctx context.Context, target string, module config.Module, registry
 		}
 		level.Info(logger).Log("msg", "Using local address", "srcIP", srcIP)
 		sAddr, err := net.ResolveUDPAddr(dialProtocol, ip.String()+":"+port)
-		if err !=nil {
+		if err != nil {
 			level.Error(logger).Log("error", "Can't resolve source address:", "error:", err)
 			return nil, fmt.Errorf("can't resolve source address:%s", err)
 		}
@@ -61,7 +61,6 @@ func  dialUDP(ctx context.Context, target string, module config.Module, registry
 	level.Info(logger).Log("msg", "Dialing UDP")
 	return net.DialUDP(dialProtocol, sourceAddr, addr)
 }
-
 
 func ProbeUDP(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger) bool {
 	probeFailedDueToRegex := prometheus.NewGauge(prometheus.GaugeOpts{
@@ -87,7 +86,7 @@ func ProbeUDP(ctx context.Context, target string, module config.Module, registry
 		return false
 	}
 
-	_, er :=verifyConnect(logger, conn, probeFailedDueToRegex)
+	_, er := verifyConnect(logger, conn, probeFailedDueToRegex)
 	if er != nil {
 		level.Error(logger).Log("msg", "failed verifyQueryResponse", er)
 		return false
@@ -105,7 +104,7 @@ func verifyConnect(logger log.Logger, conn net.Conn, probeFailedDueToRegex prome
 	}
 	// Read lines until one of them matches the configured regexp.
 	// tip: max size of data: 1M
-	data := make([]byte, 2 << 9)
+	data := make([]byte, 2<<9)
 	_, errs := conn.Read(data)
 	if errs != nil {
 		fmt.Println("err:", errs)
