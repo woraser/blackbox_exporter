@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/prometheus/blackbox_exporter/config"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/woraser/blackbox_exporter/config"
 	"net"
 )
 
