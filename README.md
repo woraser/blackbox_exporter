@@ -1,4 +1,4 @@
-# Blackbox exporter [![Build Status](https://travis-ci.org/woraser/blackbox_exporter.svg)][travis]
+# Blackbox exporter [![Build Status](https://travis-ci.org/woraser/blackbox_exporter.svg?branch=master)](https://travis-ci.org/woraser/blackbox_exporter)
 [Source code](https://github.com/prometheus/blackbox_exporter/)
 
 
