@@ -1,11 +1,7 @@
-ARG ARCH="amd64"
-ARG OS="linux"
-FROM quay.io/prometheus/busybox-${OS}-${ARCH}:latest
-LABEL maintainer="The Prometheus Authors <prometheus-developers@googlegroups.com>"
+FROM scratch
 
-ARG ARCH="amd64"
-ARG OS="linux"
-COPY .build/${OS}-${ARCH}/blackbox_exporter  /bin/blackbox_exporter
+# build cmd:CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o blackbox_exporter .
+COPY blackbox_exporter  /bin/blackbox_exporter
 COPY blackbox.yml       /etc/blackbox_exporter/config.yml
 
 EXPOSE      9115
