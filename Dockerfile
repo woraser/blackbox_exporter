@@ -1,4 +1,4 @@
-FROM scratch
+FROM alpine
 
 # build cmd:CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o blackbox_exporter .
 COPY blackbox_exporter  /bin/blackbox_exporter
