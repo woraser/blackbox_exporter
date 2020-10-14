@@ -18,6 +18,7 @@ import (
 	"context"
 	"math/rand"
 	"net"
+	"net/url"
 	"os"
 	"sync"
 	"time"
@@ -61,7 +62,7 @@ func getICMPSequence() uint16 {
 	return icmpSequence
 }
 
-func ProbeICMP(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger) (success bool) {
+func ProbeICMP(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger, params url.Values) (success bool) {
 	var (
 		socket      net.PacketConn
 		requestType icmp.Type

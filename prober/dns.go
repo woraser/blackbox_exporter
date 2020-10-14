@@ -15,7 +15,9 @@ package prober
 
 import (
 	"context"
+	"encoding/base64"
 	"net"
+	"net/url"
 	"regexp"
 	"time"
 
@@ -23,6 +25,7 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus"
+	"gopkg.in/yaml.v3"
 
 	"github.com/woraser/blackbox_exporter/config"
 )
@@ -123,7 +126,7 @@ func validRcode(rcode int, valid []string, logger log.Logger) bool {
 	return false
 }
 
-func ProbeDNS(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger) bool {
+func ProbeDNS(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger, params url.Values) bool {
 	var dialProtocol string
 	probeDNSAnswerRRSGauge := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "probe_dns_answer_rrs",
@@ -140,6 +143,20 @@ func ProbeDNS(ctx context.Context, target string, module config.Module, registry
 	registry.MustRegister(probeDNSAnswerRRSGauge)
 	registry.MustRegister(probeDNSAuthorityRRSGauge)
 	registry.MustRegister(probeDNSAdditionalRRSGauge)
+
+	config := params.Get("config")
+	if config != "" {
+		b, err := base64.StdEncoding.DecodeString(config)
+		if err != nil {
+			level.Error(logger).Log("msg", "Failed to decode config", "err", err)
+			return false
+		}
+		err = yaml.Unmarshal(b, &module.DNS)
+		if err != nil {
+			level.Error(logger).Log("msg", "Failed to unmarshal config", "err", err)
+			return false
+		}
+	}
 
 	qt := dns.TypeANY
 	if module.DNS.QueryType != "" {

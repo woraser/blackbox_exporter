@@ -14,6 +14,7 @@ The additional config for UDP Protocol.
 preferred_ip_protocol: "ip4" 
 ip_protocol_fallback: false
 source_ip_address: "127.0.0.1"  
+query_response: []query_response
 ```
 
 ### 2. Update api
@@ -23,10 +24,10 @@ Method: GET
 Path: {host:ip}/probe
 Headers: Content-type: application/json
 Query params:
-# (required) the protocol for probe,example: UDP.
+# (required) the protocol for what defined in configle,example: UDP.
 module: "" 
 # (required) the target for probe,example: 127.0.0.1.
 target: ""
-# (required base64_encode) config for probe. See config structure.
+# (required base64_encode) the json of config for probe. See config structure.
 config: ""
 ```

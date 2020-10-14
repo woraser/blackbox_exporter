@@ -15,6 +15,7 @@ package prober
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -36,6 +37,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	pconfig "github.com/prometheus/common/config"
 	"golang.org/x/net/publicsuffix"
+	"gopkg.in/yaml.v3"
 
 	"github.com/woraser/blackbox_exporter/config"
 )
@@ -226,7 +228,7 @@ func (t *transport) GotFirstResponseByte() {
 	t.current.responseStart = time.Now()
 }
 
-func ProbeHTTP(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger) (success bool) {
+func ProbeHTTP(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger, params url.Values) (success bool) {
 	var redirects int
 	var (
 		durationGaugeVec = prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -299,6 +301,20 @@ func ProbeHTTP(ctx context.Context, target string, module config.Module, registr
 	registry.MustRegister(probeFailedDueToRegex)
 
 	httpConfig := module.HTTP
+
+	config := params.Get("config")
+	if config != "" {
+		b, err := base64.StdEncoding.DecodeString(config)
+		if err != nil {
+			level.Error(logger).Log("msg", "Failed to decode config", "err", err)
+			return false
+		}
+		err = yaml.Unmarshal(b, &httpConfig)
+		if err != nil {
+			level.Error(logger).Log("msg", "Failed to unmarshal config", "err", err)
+			return false
+		}
+	}
 
 	if !strings.HasPrefix(target, "http://") && !strings.HasPrefix(target, "https://") {
 		target = "http://" + target

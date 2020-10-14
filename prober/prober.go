@@ -15,6 +15,7 @@ package prober
 
 import (
 	"context"
+	"net/url"
 
 	"github.com/go-kit/kit/log"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,4 +23,4 @@ import (
 	"github.com/woraser/blackbox_exporter/config"
 )
 
-type ProbeFn func(ctx context.Context, target string, config config.Module, registry *prometheus.Registry, logger log.Logger) bool
+type ProbeFn func(ctx context.Context, target string, config config.Module, registry *prometheus.Registry, logger log.Logger, params url.Values) bool

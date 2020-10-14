@@ -17,14 +17,17 @@ import (
 	"bufio"
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"net"
+	"net/url"
 	"regexp"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	pconfig "github.com/prometheus/common/config"
+	"gopkg.in/yaml.v3"
 
 	"github.com/woraser/blackbox_exporter/config"
 )
@@ -89,7 +92,7 @@ func dialTCP(ctx context.Context, target string, module config.Module, registry 
 	return tls.DialWithDialer(dialer, dialProtocol, dialTarget, tlsConfig)
 }
 
-func ProbeTCP(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger) bool {
+func ProbeTCP(ctx context.Context, target string, module config.Module, registry *prometheus.Registry, logger log.Logger, params url.Values) bool {
 	probeSSLEarliestCertExpiry := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "probe_ssl_earliest_cert_expiry",
 		Help: "Returns earliest SSL cert expiry date",
@@ -107,6 +110,20 @@ func ProbeTCP(ctx context.Context, target string, module config.Module, registry
 	})
 	registry.MustRegister(probeFailedDueToRegex)
 	deadline, _ := ctx.Deadline()
+
+	paramConfig := params.Get("config")
+	if paramConfig != "" {
+		b, err := base64.StdEncoding.DecodeString(paramConfig)
+		if err != nil {
+			level.Error(logger).Log("msg", "Failed to decode config", "err", err)
+			return false
+		}
+		err = yaml.Unmarshal(b, &module.TCP)
+		if err != nil {
+			level.Error(logger).Log("msg", "Failed to unmarshal config", "err", err)
+			return false
+		}
+	}
 
 	conn, err := dialTCP(ctx, target, module, registry, logger)
 	if err != nil {
