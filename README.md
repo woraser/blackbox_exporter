@@ -17,7 +17,7 @@ source_ip_address: "127.0.0.1"
 query_response: []query_response
 ```
 
-### 2. Update api
+### 2. Update probe api
 [Config Structure](https://github.com/woraser/blackbox_exporter/blob/master/config/config.go)
 ```
 Method: GET
@@ -28,7 +28,7 @@ Query params:
 module: "" 
 # (required) the target for probe,example: 127.0.0.1.
 target: ""
-# (required base64_encode) the json of config for probe. See config structure.
+# (required base64_encode) the json object of config for probe. See `Config Structure`.
 # example: {
 #            "method": "POST",
 #            "preferred_ip_protocol": "ip4"
