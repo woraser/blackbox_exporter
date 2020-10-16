@@ -29,5 +29,10 @@ module: ""
 # (required) the target for probe,example: 127.0.0.1.
 target: ""
 # (required base64_encode) the json of config for probe. See config structure.
-config: ""
+# example: {
+#            "method": "POST",
+#            "preferred_ip_protocol": "ip4"
+#          }
+# convert to base64:ew0KIm1ldGhvZCI6ICJQT1NUIiwNCiJwcmVmZXJyZWRfaXBfcHJvdG9jb2wiOiAiaXA0Ig0KfQ==
+config: "ew0KIm1ldGhvZCI6ICJQT1NUIiwNCiJwcmVmZXJyZWRfaXBfcHJvdG9jb2wiOiAiaXA0Ig0KfQ=="
 ```
