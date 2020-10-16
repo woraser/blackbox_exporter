@@ -405,7 +405,7 @@ func TestFailIfHeaderMatchesRegexp(t *testing.T) {
 		testCTX, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		result := ProbeHTTP(testCTX, ts.URL, config.Module{Timeout: time.Second, HTTP: config.HTTPProbe{IPProtocolFallback: true, FailIfHeaderMatchesRegexp: []config.HeaderMatch{test.Rule}}}, registry, log.NewNopLogger())
+		result := ProbeHTTP(testCTX, ts.URL, config.Module{Timeout: time.Second, HTTP: config.HTTPProbe{IPProtocolFallback: true, FailIfHeaderMatchesRegexp: []config.HeaderMatch{test.Rule}}}, registry, log.NewNopLogger(), params)
 		if result != test.ShouldSucceed {
 			t.Fatalf("Test %d had unexpected result: succeeded: %t, expected: %+v", i, result, test)
 		}
@@ -453,7 +453,7 @@ func TestFailIfHeaderNotMatchesRegexp(t *testing.T) {
 		testCTX, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		result := ProbeHTTP(testCTX, ts.URL, config.Module{Timeout: time.Second, HTTP: config.HTTPProbe{IPProtocolFallback: true, FailIfHeaderNotMatchesRegexp: []config.HeaderMatch{test.Rule}}}, registry, log.NewNopLogger())
+		result := ProbeHTTP(testCTX, ts.URL, config.Module{Timeout: time.Second, HTTP: config.HTTPProbe{IPProtocolFallback: true, FailIfHeaderNotMatchesRegexp: []config.HeaderMatch{test.Rule}}}, registry, log.NewNopLogger(), params)
 		if result != test.ShouldSucceed {
 			t.Fatalf("Test %d had unexpected result: succeeded: %t, expected: %+v", i, result, test)
 		}
@@ -501,7 +501,7 @@ func TestHTTPHeaders(t *testing.T) {
 	result := ProbeHTTP(testCTX, ts.URL, config.Module{Timeout: time.Second, HTTP: config.HTTPProbe{
 		IPProtocolFallback: true,
 		Headers:            headers,
-	}}, registry, log.NewNopLogger())
+	}}, registry, log.NewNopLogger(), params)
 	if !result {
 		t.Fatalf("Probe failed unexpectedly.")
 	}
@@ -646,7 +646,7 @@ func TestHTTPUsesTargetAsTLSServerName(t *testing.T) {
 	url := strings.Replace(ts.URL, "127.0.0.1", "localhost", -1)
 	url = strings.Replace(url, "[::1]", "localhost", -1)
 
-	result := ProbeHTTP(context.Background(), url, module, registry, log.NewNopLogger())
+	result := ProbeHTTP(context.Background(), url, module, registry, log.NewNopLogger(), params)
 	if !result {
 		t.Fatalf("TLS probe failed unexpectedly")
 	}
@@ -762,7 +762,7 @@ func TestCookieJar(t *testing.T) {
 	registry := prometheus.NewRegistry()
 	testCTX, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	result := ProbeHTTP(testCTX, ts.URL, config.Module{Timeout: time.Second, HTTP: config.HTTPProbe{IPProtocolFallback: true}}, registry, log.NewNopLogger())
+	result := ProbeHTTP(testCTX, ts.URL, config.Module{Timeout: time.Second, HTTP: config.HTTPProbe{IPProtocolFallback: true}}, registry, log.NewNopLogger(), params)
 	body := recorder.Body.String()
 	if !result {
 		t.Fatalf("Redirect test failed unexpectedly, got %s", body)

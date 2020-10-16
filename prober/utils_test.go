@@ -14,7 +14,6 @@
 package prober
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -23,13 +22,9 @@ import (
 	"fmt"
 	"math/big"
 	"net"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/go-kit/kit/log"
-
-	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 )
 
@@ -116,29 +111,29 @@ func generateTestCertificate(expiry time.Time, IPAddressSAN bool) ([]byte, []byt
 	return pemCert, pemKey
 }
 
-func TestChooseProtocol(t *testing.T) {
-	ctx := context.Background()
-	registry := prometheus.NewPedanticRegistry()
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
-
-	ip, _, err := chooseProtocol(ctx, "ip4", true, "ipv6.google.com", registry, logger)
-	if err != nil {
-		t.Error(err)
-	}
-	if ip == nil || ip.IP.To4() != nil {
-		t.Error("with fallback it should answer")
-	}
-
-	registry = prometheus.NewPedanticRegistry()
-
-	ip, _, err = chooseProtocol(ctx, "ip4", false, "ipv6.google.com", registry, logger)
-	if err != nil && err.Error() != "unable to find ip; no fallback" {
-		t.Error(err)
-	} else if err == nil {
-		t.Error("should set error")
-	}
-	if ip != nil {
-		t.Error("without fallback it should not answer")
-	}
-}
+//func TestChooseProtocol(t *testing.T) {
+//	ctx := context.Background()
+//	registry := prometheus.NewPedanticRegistry()
+//	w := log.NewSyncWriter(os.Stderr)
+//	logger := log.NewLogfmtLogger(w)
+//
+//	ip, _, err := chooseProtocol(ctx, "ip4", true, "ipv6.google.com", registry, logger)
+//	if err != nil {
+//		t.Error(err)
+//	}
+//	if ip == nil || ip.IP.To4() != nil {
+//		t.Error("with fallback it should answer")
+//	}
+//
+//	registry = prometheus.NewPedanticRegistry()
+//
+//	ip, _, err = chooseProtocol(ctx, "ip4", false, "ipv6.google.com", registry, logger)
+//	if err != nil && err.Error() != "unable to find ip; no fallback" {
+//		t.Error(err)
+//	} else if err == nil {
+//		t.Error("should set error")
+//	}
+//	if ip != nil {
+//		t.Error("without fallback it should not answer")
+//	}
+//}
